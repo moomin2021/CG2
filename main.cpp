@@ -1,14 +1,8 @@
+#include "Input.h"
 #include <Windows.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <cassert>
-
-// DirectInputのバージョン指定
-#define DIRECTINPUT_VERSION	0x0800
-#include <dinput.h>
-
-#pragma comment(lib, "dinput8.lib")
-#pragma comment(lib, "dxguid.lib")
 
 // D3Dコンパイラのインクルード
 #include <d3dcompiler.h>
@@ -230,26 +224,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	UINT64 fenceVal = 0;
 	result = device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 
-	// DirectInputの初期化
-	IDirectInput8 * directInput = nullptr;
-	result = DirectInput8Create(
-		w.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,
-		(void **)&directInput, nullptr);
-	assert(SUCCEEDED(result));
-
-	// キーボードデバイスの生成
-	IDirectInputDevice8 * keyboard = nullptr;
-	result = directInput->CreateDevice(GUID_SysKeyboard, &keyboard, NULL);
-	assert(SUCCEEDED(result));
-
-	// 入力データの形跡セット
-	result = keyboard->SetDataFormat(&c_dfDIKeyboard); // 標準形式
-	assert(SUCCEEDED(result));
-
-	// 排他制御レベルのセット
-	result = keyboard->SetCooperativeLevel(
-		hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY);
-	assert(SUCCEEDED(result));
+	// キーボード情報の初期化
+	Input::InputInitialize(result, w, hwnd);
 
 #pragma endregion
 
@@ -394,7 +370,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// ラスタライザの設定
 	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // カリングしない
-	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID; // ポリゴン内塗りつぶし
+	//pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID; // ポリゴン内塗りつぶし
+	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;// ワイヤーフレーム
 	pipelineDesc.RasterizerState.DepthClipEnable = true; // 深度クリッピングを有効に
 
 	// ブレンドステート
@@ -462,15 +439,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region
 
-		// キーボード情報の取得開始
-		keyboard->Acquire();
-
-		// 全キーの入力状態を取得する
-		BYTE key[256] = {};
-		keyboard->GetDeviceState(sizeof(key), key);
+		// キーボードの更新処理
+		Input::InputUpdate();
 
 		// 数字の0キーが押されたら
-		if (key[DIK_0])
+		if (Input::KeyDown(DIK_0))
 		{
 			// 出力ウィンドウに「Hit 0」と表示
 			OutputDebugStringA("Hit 0\n");
@@ -496,7 +469,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		FLOAT clearColor[] = { 0.1f,0.25f, 0.5f,0.0f }; // 青っぽい色
 
 		// スペースキーを押されている間、色を変える
-		if (key[DIK_SPACE])
+		if (Input::KeyTrigger(DIK_SPACE))
 		{
 			clearColor[0] = 0.5f;
 			clearColor[1] = 0.5f;
