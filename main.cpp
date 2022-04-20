@@ -236,11 +236,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region
 
 	// 頂点データ
-	XMFLOAT3 vertices[] = {
-	{ -0.5f, -0.5f, 0.0f }, // 左下
-	{ -0.5f, +0.5f, 0.0f }, // 左上
-	{ +0.5f, -0.5f, 0.0f }, // 右下
+	XMFLOAT3 vertices[] =
+	{
+		{ -0.5f, -0.5f, 0.0f }, // 左下
+		{ -0.5f, +0.5f, 0.0f }, // 左上
+		{ +0.5f, -0.5f, 0.0f }, // 右下
+		{ -0.5f, +0.5f, 0.0f }, // 左上
+		{ +0.5f, +0.5f, 0.0f }, // 右上
+		{ +0.5f, -0.5f, 0.0f }, // 右下
 	};
+
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
 	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * _countof(vertices));
 
@@ -370,8 +375,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// ラスタライザの設定
 	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // カリングしない
-	//pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID; // ポリゴン内塗りつぶし
-	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;// ワイヤーフレーム
+	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID; // ポリゴン内塗りつぶし
 	pipelineDesc.RasterizerState.DepthClipEnable = true; // 深度クリッピングを有効に
 
 	// ブレンドステート
@@ -442,11 +446,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		// キーボードの更新処理
 		Input::InputUpdate();
 
-		// 数字の0キーが押されたら
-		if (Input::KeyDown(DIK_0))
+		// キーボードで2が押されたら図形を塗りつぶしかワイヤーフレームにするか切り替える
+		if (Input::KeyTrigger(DIK_2))
 		{
-			// 出力ウィンドウに「Hit 0」と表示
-			OutputDebugStringA("Hit 0\n");
+			if (pipelineDesc.RasterizerState.FillMode == D3D12_FILL_MODE_SOLID)
+			{
+				pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+			}
+			else
+			{
+				pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
+			}
+			result = device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
+			assert(SUCCEEDED(result));
 		}
 
 		// バックバッファの番号を取得(2つなので0番か1番)
@@ -469,11 +481,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		FLOAT clearColor[] = { 0.1f,0.25f, 0.5f,0.0f }; // 青っぽい色
 
 		// スペースキーを押されている間、色を変える
-		if (Input::KeyTrigger(DIK_SPACE))
+		if (Input::KeyDown(DIK_SPACE))
 		{
-			clearColor[0] = 0.5f;
-			clearColor[1] = 0.5f;
-			clearColor[2] = 0.75f;
+			clearColor[0] = 1.0f;
+			clearColor[1] = 0.0f;
+			clearColor[2] = 0.6f;
 			clearColor[3] = 0.0f;
 		}
 
@@ -484,9 +496,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region
 
 // ビューポート設定コマンド
+
+		// -左上のビューポート設定- //
 		D3D12_VIEWPORT viewport{};
-		viewport.Width = window_width;
-		viewport.Height = window_height;
+		viewport.Width = window_width - (window_width / 4);
+		viewport.Height = window_height - (window_height / 4);
 		viewport.TopLeftX = 0;
 		viewport.TopLeftY = 0;
 		viewport.MinDepth = 0.0f;
@@ -512,6 +526,46 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 		// 頂点バッファビューの設定コマンド
 		commandList->IASetVertexBuffers(0, 1, &vbView);
+
+		// 描画コマンド
+		commandList->DrawInstanced(_countof(vertices), 1, 0, 0); // 全ての頂点を使って描画
+
+
+		// -右上のビューポート設定- //
+		viewport.Width = window_width / 4;
+		viewport.Height = window_height -(window_height / 4);
+		viewport.TopLeftX = window_width - (window_width / 4);
+		viewport.TopLeftY = 0;
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+		// ビューポート設定コマンドを、コマンドリストに積む
+		commandList->RSSetViewports(1, &viewport);
+
+		// 描画コマンド
+		commandList->DrawInstanced(_countof(vertices), 1, 0, 0); // 全ての頂点を使って描画
+
+		// -左下のビューポート設定- //
+		viewport.Width = window_width - (window_width / 4);
+		viewport.Height = window_height / 4;
+		viewport.TopLeftX = 0;
+		viewport.TopLeftY = window_height - (window_height / 4);
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+		// ビューポート設定コマンドを、コマンドリストに積む
+		commandList->RSSetViewports(1, &viewport);
+
+		// 描画コマンド
+		commandList->DrawInstanced(_countof(vertices), 1, 0, 0); // 全ての頂点を使って描画
+
+		// -右下のビューポート設定- //
+		viewport.Width = window_width / 4;
+		viewport.Height = window_height / 4;
+		viewport.TopLeftX = window_width - (window_width / 4);
+		viewport.TopLeftY = window_height - (window_height / 4);
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+		// ビューポート設定コマンドを、コマンドリストに積む
+		commandList->RSSetViewports(1, &viewport);
 
 		// 描画コマンド
 		commandList->DrawInstanced(_countof(vertices), 1, 0, 0); // 全ての頂点を使って描画

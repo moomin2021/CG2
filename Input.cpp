@@ -40,14 +40,13 @@ void Input::InputUpdate()
 {
 	// キーボード情報の取得開始
 	keyboard->Acquire();
-	keyboard->GetDeviceState(sizeof(oldKeys), oldKeys);
 
 	for (int i = 0; i < 256; i++)
 	{
 		oldKeys[i] = keys[i];
 	}
-	keyboard->GetDeviceState(sizeof(keys), keys);
 
+	keyboard->GetDeviceState(sizeof(keys), keys);
 }
 
 bool Input::KeyDown(char key)
