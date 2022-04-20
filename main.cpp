@@ -495,7 +495,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		// 3.画面クリア R G B A
 		FLOAT clearColor[] = { 0.1f,0.25f, 0.5f,0.0f }; // 青っぽい色
 
-		// スペースキーを押されたら色を変える
+		// スペースキーを押されている間、色を変える
 		if (key[DIK_SPACE])
 		{
 			clearColor[0] = 0.5f;
