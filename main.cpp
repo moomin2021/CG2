@@ -236,7 +236,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region
 
 	// 描画する頂点の数
-	int DrawVerticesNum = 6;
+	int DrawVerticesNum = 4;
 
 	// 頂点データ
 	XMFLOAT3 vertices[] =
@@ -244,9 +244,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		{ -0.5f, -0.5f, 0.0f }, // 左下
 		{ -0.5f, +0.5f, 0.0f }, // 左上
 		{ +0.5f, -0.5f, 0.0f }, // 右下
-		{ -0.5f, +0.5f, 0.0f }, // 左上
 		{ +0.5f, +0.5f, 0.0f }, // 右上
-		{ +0.5f, -0.5f, 0.0f }, // 右下
 	};
 
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
@@ -530,13 +528,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		// キーボードで1が押されたら、三角の場合四角に切り替え、四角の場合三角に切り替える
 		if (Input::KeyTrigger(DIK_1))
 		{
-			if (DrawVerticesNum == 6)
+			if (DrawVerticesNum == 4)
 			{
 				DrawVerticesNum = 3;
 			}
 			else
 			{
-				DrawVerticesNum = 6;
+				DrawVerticesNum = 4;
 			}
 		}
 
@@ -591,7 +589,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->SetGraphicsRootSignature(rootSignature);
 
 		// プリミティブ形状の設定コマンド
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 三角形リスト
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP); // 三角形リスト
 
 		// 頂点バッファビューの設定コマンド
 		commandList->IASetVertexBuffers(0, 1, &vbView);
