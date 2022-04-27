@@ -382,8 +382,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	pipelineDesc.RasterizerState.DepthClipEnable = true; // 深度クリッピングを有効に
 
 	// ブレンドステート
-	pipelineDesc.BlendState.RenderTarget[0].RenderTargetWriteMask
-		= D3D12_COLOR_WRITE_ENABLE_ALL; // RBGA全てのチャンネルを描画
+	//pipelineDesc.BlendState.RenderTarget[0].RenderTargetWriteMask
+		//= D3D12_COLOR_WRITE_ENABLE_ALL; // RBGA全てのチャンネルを描画
+	D3D12_RENDER_TARGET_BLEND_DESC & blenddesc = pipelineDesc.BlendState.RenderTarget[0];
+	blenddesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL; // RBGA全てのチャンネルを描画
+
+	// 共通設定
+	blenddesc.BlendEnable = true;// ----------------> ブレンドを有効にする
+	blenddesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;// -> 加算
+	blenddesc.SrcBlendAlpha = D3D12_BLEND_ONE;// ---> ソースの値を100%使う
+	blenddesc.DestBlendAlpha = D3D12_BLEND_ZERO;// -> デストの値を0%使う
+
+	// 加算合成
+	blenddesc.BlendOp = D3D12_BLEND_OP_ADD;// -> 加算
+	blenddesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;// -> ソースの値を100%使う
+	blenddesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;// -> デストの値を100%使う
 
 	// 頂点レイアウトの設定
 	pipelineDesc.InputLayout.pInputElementDescs = inputLayout;
@@ -391,7 +404,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// 図形の形状設定
 	pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	//pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 
 	// その他の設定
 	pipelineDesc.NumRenderTargets = 1; // 描画対象は1つ
@@ -495,7 +507,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
 
 		// 3.画面クリア R G B A
-		FLOAT clearColor[] = { 0.1f,0.25f, 0.5f,0.0f }; // 青っぽい色
+		FLOAT clearColor[] = { 0.1f ,0.25f, 0.5f, 0.0f }; // 青っぽい色
 
 		// スペースキーを押されている間、色を変える
 		if (Input::KeyDown(DIK_SPACE))
@@ -509,21 +521,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
 		// 4.描画コマンドここから
-		
+
 #pragma region
 
 // ビューポート設定コマンド
-
-		// -左上のビューポート設定- //
-		D3D12_VIEWPORT viewport{};
-		viewport.Width = window_width - (window_width / 4);
-		viewport.Height = window_height - (window_height / 4);
-		viewport.TopLeftX = 0;
-		viewport.TopLeftY = 0;
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-		// ビューポート設定コマンドを、コマンドリストに積む
-		commandList->RSSetViewports(1, &viewport);
 
 		// シザー矩形
 		D3D12_RECT scissorRect{};
@@ -540,17 +541,27 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 		// プリミティブ形状の設定コマンド
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 三角形リスト
-		
+
 		// 頂点バッファビューの設定コマンド
 		commandList->IASetVertexBuffers(0, 1, &vbView);
+
+		// -左上のビューポート設定- //
+		D3D12_VIEWPORT viewport{};
+		viewport.Width = window_width - (window_width / 4);
+		viewport.Height = window_height - (window_height / 4);
+		viewport.TopLeftX = 0;
+		viewport.TopLeftY = 0;
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+		// ビューポート設定コマンドを、コマンドリストに積む
+		commandList->RSSetViewports(1, &viewport);
 
 		// 描画コマンド
 		commandList->DrawInstanced(DrawVerticesNum, 1, 0, 0); // 全ての頂点を使って描画
 
-
 		// -右上のビューポート設定- //
 		viewport.Width = window_width / 4;
-		viewport.Height = window_height -(window_height / 4);
+		viewport.Height = window_height - (window_height / 4);
 		viewport.TopLeftX = window_width - (window_width / 4);
 		viewport.TopLeftY = 0;
 		viewport.MinDepth = 0.0f;
@@ -588,7 +599,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->DrawInstanced(DrawVerticesNum, 1, 0, 0); // 全ての頂点を使って描画
 
 #pragma endregion
-		
+
 		// 4.描画コマンドここまで
 
 		// 5.リソースバリアを戻す
