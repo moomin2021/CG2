@@ -235,6 +235,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region
 
+	// 描画する頂点の数
+	int DrawVerticesNum = 6;
+
 	// 頂点データ
 	XMFLOAT3 vertices[] =
 	{
@@ -388,6 +391,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// 図形の形状設定
 	pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	//pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
 
 	// その他の設定
 	pipelineDesc.NumRenderTargets = 1; // 描画対象は1つ
@@ -461,6 +465,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			assert(SUCCEEDED(result));
 		}
 
+		// キーボードで1が押されたら、三角の場合四角に切り替え、四角の場合三角に切り替える
+		if (Input::KeyTrigger(DIK_1))
+		{
+			if (DrawVerticesNum == 6)
+			{
+				DrawVerticesNum = 3;
+			}
+			else
+			{
+				DrawVerticesNum = 6;
+			}
+		}
+
 		// バックバッファの番号を取得(2つなので0番か1番)
 		UINT bbIndex = swapChain->GetCurrentBackBufferIndex();
 
@@ -523,12 +540,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 		// プリミティブ形状の設定コマンド
 		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 三角形リスト
-
+		
 		// 頂点バッファビューの設定コマンド
 		commandList->IASetVertexBuffers(0, 1, &vbView);
 
 		// 描画コマンド
-		commandList->DrawInstanced(_countof(vertices), 1, 0, 0); // 全ての頂点を使って描画
+		commandList->DrawInstanced(DrawVerticesNum, 1, 0, 0); // 全ての頂点を使って描画
 
 
 		// -右上のビューポート設定- //
@@ -542,7 +559,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->RSSetViewports(1, &viewport);
 
 		// 描画コマンド
-		commandList->DrawInstanced(_countof(vertices), 1, 0, 0); // 全ての頂点を使って描画
+		commandList->DrawInstanced(DrawVerticesNum, 1, 0, 0); // 全ての頂点を使って描画
 
 		// -左下のビューポート設定- //
 		viewport.Width = window_width - (window_width / 4);
@@ -555,7 +572,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->RSSetViewports(1, &viewport);
 
 		// 描画コマンド
-		commandList->DrawInstanced(_countof(vertices), 1, 0, 0); // 全ての頂点を使って描画
+		commandList->DrawInstanced(DrawVerticesNum, 1, 0, 0); // 全ての頂点を使って描画
 
 		// -右下のビューポート設定- //
 		viewport.Width = window_width / 4;
@@ -568,7 +585,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		commandList->RSSetViewports(1, &viewport);
 
 		// 描画コマンド
-		commandList->DrawInstanced(_countof(vertices), 1, 0, 0); // 全ての頂点を使って描画
+		commandList->DrawInstanced(DrawVerticesNum, 1, 0, 0); // 全ての頂点を使って描画
 
 #pragma endregion
 		
