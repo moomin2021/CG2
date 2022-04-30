@@ -235,20 +235,24 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 #pragma region
 
-	// 描画する頂点の数
-	int DrawVerticesNum = 4;
+	// 頂点データの構造体
+	struct Vertex
+	{
+		XMFLOAT3 pos;// -> xyz座標
+		XMFLOAT2 uv;// --> uv座標
+	};
 
 	// 頂点データ
-	XMFLOAT3 vertices[] =
+	Vertex vertices[] =
 	{
-		{ -0.5f, -0.5f, 0.0f }, // 左下
-		{ -0.5f, +0.5f, 0.0f }, // 左上
-		{ +0.5f, -0.5f, 0.0f }, // 右下
-		{ +0.5f, +0.5f, 0.0f }, // 右上
+		{{-0.4f, -0.7f, 0.0f}, {0.0f, 1.0f}},// 左上
+		{{-0.4f, +0.7f, 0.0f}, {0.0f, 0.0f}},// 左上
+		{{+0.4f, -0.7f, 0.0f}, {1.0f, 1.0f}},// 右下
+		{{+0.4f, +0.7f, 0.0f}, {1.0f, 0.0f}},// 右下
 	};
 
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
-	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * _countof(vertices));
+	UINT sizeVB = static_cast<UINT>(sizeof(vertices[0]) * _countof(vertices));
 
 	// 頂点バッファの設定
 	D3D12_HEAP_PROPERTIES heapProp{}; // ヒープ設定
@@ -275,7 +279,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	assert(SUCCEEDED(result));
 
 	// GPU上のバッファに対応した仮想メモリ(メインメモリ上)を取得
-	XMFLOAT3 * vertMap = nullptr;
+	Vertex * vertMap = nullptr;
 	result = vertBuff->Map(0, nullptr, (void **)&vertMap);
 	assert(SUCCEEDED(result));
 	// 全頂点に対して
@@ -292,8 +296,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
 	// 頂点バッファのサイズ
 	vbView.SizeInBytes = sizeVB;
-	// 頂点1つ分のデータサイズ
-	vbView.StrideInBytes = sizeof(XMFLOAT3);
+	// 頂点データ1つ分のサイズ
+	vbView.StrideInBytes = sizeof(vertices[0]);
 
 	ID3DBlob * vsBlob = nullptr; // 頂点シェーダオブジェクト
 	ID3DBlob * psBlob = nullptr; // ピクセルシェーダオブジェクト
@@ -349,17 +353,28 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	}
 
 	// 頂点レイアウト
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 	{
-	"POSITION", // ---------------------------------> セマンティック名
-	0, // ------------------------------------------> 同じセマンティック名が複数あるときに使うインデックス（0でよい）
-	DXGI_FORMAT_R32G32B32_FLOAT, // ----------------> 要素数とビット数を表す（XYZの三つでfloat型なのでR326G32B32_FLOAT）
-	0, // ------------------------------------------> 入力スロットインデックス（0でよい）
-	D3D12_APPEND_ALIGNED_ELEMENT, // ---------------> データのオフセット値（D3D12_APPEND_ALIGNED_ELEMENTだと自動設定）
-	D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, // -> 入力データ種別（標準はD3D12_INPUT_CLASSIFICATTON_PER_VERTEX_DATA）
-	0 // -------------------------------------------> 一度に描写するインスタンス数（0でよい）
-	},
-		// 座標以外に色、テクスチャUVなどを渡す場合はさらに続ける
+		{
+			// xyz座標
+			"POSITION", // ---------------------------------> セマンティック名
+			0, // ------------------------------------------> 同じセマンティック名が複数あるときに使うインデックス（0でよい）
+			DXGI_FORMAT_R32G32B32_FLOAT, // ----------------> 要素数とビット数を表す（XYZの三つでfloat型なのでR326G32B32_FLOAT）
+			0, // ------------------------------------------> 入力スロットインデックス（0でよい）
+			D3D12_APPEND_ALIGNED_ELEMENT, // ---------------> データのオフセット値（D3D12_APPEND_ALIGNED_ELEMENTだと自動設定）
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, // -> 入力データ種別（標準はD3D12_INPUT_CLASSIFICATTON_PER_VERTEX_DATA）
+			0 // -------------------------------------------> 一度に描写するインスタンス数（0でよい）
+		},
+		{
+			// uv座標
+			"TEXCOORD",
+			0,
+			DXGI_FORMAT_R32G32_FLOAT,
+			0,
+			D3D12_APPEND_ALIGNED_ELEMENT,
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+			0
+		}
 	};
 
 	// グラフィックスパイプライン設定
@@ -476,7 +491,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// 値を書き込むと自動的に転送される
 	constMapMaterial->color = XMFLOAT4(1, 0, 0, 0.5f);// -> RGBAで半透明の赤
 
-	uint16_t indices[] =
+	// インデックスデータ
+	unsigned short indices[] =
 	{
 		0, 1, 2,// 三角形1つ目
 		1, 2, 3,// 三角形2つ目
@@ -545,10 +561,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			break;
 		}
 
-		// 時間がたつごとに赤から緑に変化
-		constMapMaterial->color.x -= 0.01f;
-		constMapMaterial->color.y += 0.01f;
-
 		// DirectX毎フレーム処理　ここから
 
 #pragma region
@@ -569,19 +581,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			}
 			result = device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
 			assert(SUCCEEDED(result));
-		}
-
-		// キーボードで1が押されたら、三角の場合四角に切り替え、四角の場合三角に切り替える
-		if (Input::KeyTrigger(DIK_1))
-		{
-			if (DrawVerticesNum == 4)
-			{
-				DrawVerticesNum = 3;
-			}
-			else
-			{
-				DrawVerticesNum = 4;
-			}
 		}
 
 		// バックバッファの番号を取得(2つなので0番か1番)
@@ -645,8 +644,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 		// -左上のビューポート設定- //
 		D3D12_VIEWPORT viewport{};
-		viewport.Width = window_width - (window_width / 4);
-		viewport.Height = window_height - (window_height / 4);
+		viewport.Width = window_width;
+		viewport.Height = window_height;
 		viewport.TopLeftX = 0;
 		viewport.TopLeftY = 0;
 		viewport.MinDepth = 0.0f;
@@ -656,45 +655,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 		// 定数バッファビュー(CBV)の設定コマンド
 		commandList->SetGraphicsRootConstantBufferView(0, constBuffMaterial->GetGPUVirtualAddress());
-
-		// 描画コマンド
-		commandList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0); // 全ての頂点を使って描画
-
-		// -右上のビューポート設定- //
-		viewport.Width = window_width / 4;
-		viewport.Height = window_height - (window_height / 4);
-		viewport.TopLeftX = window_width - (window_width / 4);
-		viewport.TopLeftY = 0;
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-		// ビューポート設定コマンドを、コマンドリストに積む
-		commandList->RSSetViewports(1, &viewport);
-
-		// 描画コマンド
-		commandList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0); // 全ての頂点を使って描画
-
-		// -左下のビューポート設定- //
-		viewport.Width = window_width - (window_width / 4);
-		viewport.Height = window_height / 4;
-		viewport.TopLeftX = 0;
-		viewport.TopLeftY = window_height - (window_height / 4);
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-		// ビューポート設定コマンドを、コマンドリストに積む
-		commandList->RSSetViewports(1, &viewport);
-
-		// 描画コマンド
-		commandList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0); // 全ての頂点を使って描画
-
-		// -右下のビューポート設定- //
-		viewport.Width = window_width / 4;
-		viewport.Height = window_height / 4;
-		viewport.TopLeftX = window_width - (window_width / 4);
-		viewport.TopLeftY = window_height - (window_height / 4);
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
-		// ビューポート設定コマンドを、コマンドリストに積む
-		commandList->RSSetViewports(1, &viewport);
 
 		// 描画コマンド
 		commandList->DrawIndexedInstanced(_countof(indices), 1, 0, 0, 0); // 全ての頂点を使って描画
