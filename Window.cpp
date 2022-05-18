@@ -2,8 +2,7 @@
 
 // コンストラクタ
 Window::Window() :
-	windowWidth(1280),
-	windowHeight(720)
+	windowWidth(1280), windowHeight(720), w{}, wrc{}, hwnd{}, msg{}
 {
 
 }
