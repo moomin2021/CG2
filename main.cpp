@@ -34,7 +34,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region
 
 	// キーボード情報の初期化
-	Input::InputInitialize(directXM->result, win->w, win->hwnd);
+	Input::InputInitialize(win->w, win->hwnd);
 
 #pragma endregion
 
@@ -76,21 +76,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	resDesc.SampleDesc.Count = 1;
 	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
+	HRESULT result;
+
 	// 頂点バッファの生成
 	ID3D12Resource * vertBuff = nullptr;
-	directXM->result = directXM->device->CreateCommittedResource(
+	result = directXM->device->CreateCommittedResource(
 		&heapProp, // ヒープ設定
 		D3D12_HEAP_FLAG_NONE,
 		&resDesc, // リソース設定
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(&vertBuff));
-	assert(SUCCEEDED(directXM->result));
+	assert(SUCCEEDED(result));
 
 	// GPU上のバッファに対応した仮想メモリ(メインメモリ上)を取得
 	Vertex * vertMap = nullptr;
-	directXM->result = vertBuff->Map(0, nullptr, (void **)&vertMap);
-	assert(SUCCEEDED(directXM->result));
+	result = vertBuff->Map(0, nullptr, (void **)&vertMap);
+	assert(SUCCEEDED(result));
 	// 全頂点に対して
 	for (int i = 0; i < _countof(vertices); i++)
 	{
@@ -112,7 +114,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ID3DBlob * psBlob = nullptr; // ピクセルシェーダオブジェクト
 	ID3DBlob * errorBlob = nullptr; // エラーオブジェクト
 	// 頂点シェーダの読み込みとコンパイル
-	directXM->result = D3DCompileFromFile(
+	result = D3DCompileFromFile(
 		L"BasicVS.hlsl", // シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
@@ -122,7 +124,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		&vsBlob, &errorBlob);
 
 	// エラーなら
-	if (FAILED(directXM->result))
+	if (FAILED(result))
 	{
 		// errorBlobからエラー内容をstring型にコピー
 		std::string error;
@@ -137,7 +139,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	}
 
 	// ピクセルシェーダの読み込みとコンパイル
-	directXM->result = D3DCompileFromFile(
+	result = D3DCompileFromFile(
 		L"BasicPS.hlsl", // シェーダファイル名
 		nullptr,
 		D3D_COMPILE_STANDARD_FILE_INCLUDE, // インクルード可能にする
@@ -147,7 +149,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		&psBlob, &errorBlob);
 
 	// エラーなら
-	if (FAILED(directXM->result))
+	if (FAILED(result))
 	{
 		// errorBlobからエラー内容をstring型にコピー
 		std::string error;
@@ -283,20 +285,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// ルートシグネチャのシリアライズ
 	ID3DBlob * rootSigBlob = nullptr;
-	directXM->result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0,
+	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0,
 		&rootSigBlob, &errorBlob);
-	assert(SUCCEEDED(directXM->result));
-	directXM->result = directXM->device->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(),
+	assert(SUCCEEDED(result));
+	result = directXM->device->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(),
 		IID_PPV_ARGS(&rootSignature));
-	assert(SUCCEEDED(directXM->result));
+	assert(SUCCEEDED(result));
 	rootSigBlob->Release();
 	// パイプラインにルートシグネチャをセット
 	pipelineDesc.pRootSignature = rootSignature;
 
 	// パイプランステートの生成
 	ID3D12PipelineState * pipelineState = nullptr;
-	directXM->result = directXM->device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
-	assert(SUCCEEDED(directXM->result));
+	result = directXM->device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
+	assert(SUCCEEDED(result));
 
 	// 定数バッファ用データ構造
 	struct ConstBufferDataMaterial
@@ -329,17 +331,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		cbResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
 		// 定数バッファの生成
-		directXM->result = directXM->device->CreateCommittedResource(
+		result = directXM->device->CreateCommittedResource(
 			&cbHeapProp,// -> ヒープ設定
 			D3D12_HEAP_FLAG_NONE,
 			&cbResourceDesc,// -> リソース設定
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&constBuffTransform));
-		assert(SUCCEEDED(directXM->result));
+		assert(SUCCEEDED(result));
 
-		directXM->result = constBuffTransform->Map(0, nullptr, (void **)&constMapTransform);// -> マッピング
-		assert(SUCCEEDED(directXM->result));
+		result = constBuffTransform->Map(0, nullptr, (void **)&constMapTransform);// -> マッピング
+		assert(SUCCEEDED(result));
 	}
 
 	// 単位行列を代入
@@ -368,18 +370,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ID3D12Resource * constBuffMaterial = nullptr;
 
 	// 定数バッファの生成
-	directXM->result = directXM->device->CreateCommittedResource(
+	result = directXM->device->CreateCommittedResource(
 		&cbHeapProp,// -> ヒープ設定
 		D3D12_HEAP_FLAG_NONE,
 		&cbResourceDesc,// -> リソース設定
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(&constBuffMaterial));
-	assert(SUCCEEDED(directXM->result));
+	assert(SUCCEEDED(result));
 
 	// 定数バッファのマッピング
 	ConstBufferDataMaterial * constMapMaterial = nullptr;
-	directXM->result = constBuffMaterial->Map(0, nullptr, (void **)&constMapMaterial);// -> マッピング
+	result = constBuffMaterial->Map(0, nullptr, (void **)&constMapMaterial);// -> マッピング
 
 	// 値を書き込むと自動的に転送される
 	constMapMaterial->color = XMFLOAT4(1, 0, 0, 0.5f);// -> RGBAで半透明の赤
@@ -405,7 +407,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// インデックスバッファの生成
 	ID3D12Resource * indexBuff = nullptr;
-	directXM->result = directXM->device->CreateCommittedResource(
+	result = directXM->device->CreateCommittedResource(
 		&heapProp,// -> ヒープ設定
 		D3D12_HEAP_FLAG_NONE,
 		&resDesc,// -> リソース設定
@@ -415,7 +417,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// インデックスバッファをマッピング
 	uint16_t * indexMap = nullptr;
-	directXM->result = indexBuff->Map(0, nullptr, (void **)&indexMap);
+	result = indexBuff->Map(0, nullptr, (void **)&indexMap);
 	// 全インデックスに対して
 	for (int i = 0; i < _countof(indices); i++)
 	{
@@ -435,7 +437,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ScratchImage scratchImg{};
 
 	// WICテクスチャロード
-	directXM->result = LoadFromWICFile(
+	result = LoadFromWICFile(
 		L"Resources/texture.jpg",
 		WIC_FLAGS_NONE,
 		&metadata, scratchImg
@@ -444,12 +446,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	ScratchImage mipChain{};
 
 	// ミニマップ生成
-	directXM->result = GenerateMipMaps(
+	result = GenerateMipMaps(
 		scratchImg.GetImages(), scratchImg.GetImageCount(), scratchImg.GetMetadata(),
 		TEX_FILTER_DEFAULT, 0, mipChain
 	);
 
-	if (SUCCEEDED(directXM->result))
+	if (SUCCEEDED(result))
 	{
 		scratchImg = std::move(mipChain);
 		metadata = scratchImg.GetMetadata();
@@ -476,7 +478,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// テクスチャバッファの生成
 	ID3D12Resource * texBuff = nullptr;
-	directXM->result = directXM->device->CreateCommittedResource(
+	result = directXM->device->CreateCommittedResource(
 		&textureHeapProp,
 		D3D12_HEAP_FLAG_NONE,
 		&textureResourceDesc,
@@ -492,14 +494,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		const Image * img = scratchImg.GetImage(i, 0, 0);
 
 		// テクスチャバッファにデータ転送
-		directXM->result = texBuff->WriteToSubresource(
+		result = texBuff->WriteToSubresource(
 			(UINT)i,
 			nullptr,// --------------> 全領域へコピー
 			img->pixels,// ----------> 元データアドレス
 			(UINT)img->rowPitch,// --> 1ラインサイズ
 			(UINT)img->slicePitch// -> 1枚サイズ
 		);
-		assert(SUCCEEDED(directXM->result));
+		assert(SUCCEEDED(result));
 	}
 
 	// SRVの最大個数
@@ -513,8 +515,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// 設定を元にSRV用デスクリプタヒープを生成
 	ID3D12DescriptorHeap * srvHeap = nullptr;
-	directXM->result = directXM->device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap));
-	assert(SUCCEEDED(directXM->result));
+	result = directXM->device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&srvHeap));
+	assert(SUCCEEDED(result));
 
 	// SRVヒープの先頭ハンドルを取得
 	D3D12_CPU_DESCRIPTOR_HANDLE srvHandle = srvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -571,8 +573,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			{
 				pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 			}
-			directXM->result = directXM->device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
-			assert(SUCCEEDED(directXM->result));
+			result = directXM->device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
+			assert(SUCCEEDED(result));
 		}
 
 		// バックバッファの番号を取得(2つなので0番か1番)
@@ -673,14 +675,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		directXM->commandList->ResourceBarrier(1, &barrierDesc);
 
 		// 命令のクローズ
-		directXM->result = directXM->commandList->Close();
-		assert(SUCCEEDED(directXM->result));
+		result = directXM->commandList->Close();
+		assert(SUCCEEDED(result));
 		// コマンドリストの実行
 		ID3D12CommandList * commandLists[] = { directXM->commandList };
 		directXM->commandQueue->ExecuteCommandLists(1, commandLists);
 		// 画面に表示するバッファをフリップ(裏表の入替え)
-		directXM->result = directXM->swapChain->Present(1, 0);
-		assert(SUCCEEDED(directXM->result));
+		result = directXM->swapChain->Present(1, 0);
+		assert(SUCCEEDED(result));
 
 		// コマンドの実行完了を待つ
 		directXM->commandQueue->Signal(directXM->fence, ++directXM->fenceVal);
@@ -692,11 +694,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 			CloseHandle(event);
 		}
 		// キューをクリア
-		directXM->result = directXM->cmdAllocator->Reset();
-		assert(SUCCEEDED(directXM->result));
+		result = directXM->cmdAllocator->Reset();
+		assert(SUCCEEDED(result));
 		// 再びコマンドリストを貯める準備
-		directXM->result = directXM->commandList->Reset(directXM->cmdAllocator, nullptr);
-		assert(SUCCEEDED(directXM->result));
+		result = directXM->commandList->Reset(directXM->cmdAllocator, nullptr);
+		assert(SUCCEEDED(result));
 
 #pragma endregion
 

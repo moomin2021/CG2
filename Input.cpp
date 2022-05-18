@@ -14,8 +14,10 @@ static IDirectInputDevice8 * keyboard = nullptr;
 static BYTE keys[256] = {};
 static BYTE oldKeys[256] = {};
 
-void Input::InputInitialize(HRESULT result, WNDCLASSEX w, HWND hwnd)
+void Input::InputInitialize(WNDCLASSEX w, HWND hwnd)
 {
+	HRESULT result{};
+
 	// DirectInputÇÃèâä˙âª
 	result = DirectInput8Create(
 		w.hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8,

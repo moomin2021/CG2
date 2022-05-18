@@ -28,7 +28,6 @@ private:
 	DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
 
 public:
-	HRESULT result;
 	ID3D12Device * device;
 
 	IDXGISwapChain4 * swapChain;

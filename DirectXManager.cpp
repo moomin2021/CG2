@@ -29,7 +29,7 @@ void DirectXManager::DirectXInitialize(HWND hwnd)
 #endif
 
 	// DXGIファクトリーの生成
-	result = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
+	HRESULT result = CreateDXGIFactory(IID_PPV_ARGS(&dxgiFactory));
 
 	assert(SUCCEEDED(result));
 
