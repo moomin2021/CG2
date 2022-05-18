@@ -18,7 +18,7 @@ using namespace DirectX;
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
 	// ウィンドウのクラス生成
-	Window * win = new Window();
+	Window * win = new Window(1280, 720);
 
 	// ウィンドウの初期化
 	win->WindowInitialize();

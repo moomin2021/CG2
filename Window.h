@@ -22,7 +22,7 @@ public:
 	MSG msg;
 
 	// コンストラクタ
-	Window();
+	Window(int width, int height);
 
 	// デストラクタ
 	~Window();

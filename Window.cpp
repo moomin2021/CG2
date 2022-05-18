@@ -1,8 +1,8 @@
 #include "Window.h"
 
 // コンストラクタ
-Window::Window() :
-	windowWidth(1280), windowHeight(720), w{}, wrc{}, hwnd{}, msg{}
+Window::Window(int width, int height) :
+	windowWidth(width), windowHeight(height), w{}, wrc{}, hwnd{}, msg{}
 {
 
 }
