@@ -8,11 +8,10 @@
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
-static IDirectInput8 * directInput = nullptr;
-static IDirectInputDevice8 * keyboard = nullptr;
+Input::Input() : keys{}, oldKeys{}, directInput{}, keyboard{}
+{
 
-static BYTE keys[256] = {};
-static BYTE oldKeys[256] = {};
+}
 
 void Input::InputInitialize(WNDCLASSEX w, HWND hwnd)
 {

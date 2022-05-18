@@ -32,9 +32,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 	// DirectX初期化処理 ここから
 
 #pragma region
+	// Inputクラス生成
+	Input * input = new Input();
 
 	// キーボード情報の初期化
-	Input::InputInitialize(win->w, win->hwnd);
+	input->InputInitialize(win->w, win->hwnd);
 
 #pragma endregion
 
@@ -560,10 +562,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 #pragma region
 
 		// キーボードの更新処理
-		Input::InputUpdate();
+		input->InputUpdate();
 
 		// キーボードで2が押されたら図形を塗りつぶしかワイヤーフレームにするか切り替える
-		if (Input::KeyTrigger(DIK_2))
+		if (input->KeyTrigger(DIK_2))
 		{
 			if (pipelineDesc.RasterizerState.FillMode == D3D12_FILL_MODE_SOLID)
 			{
@@ -598,7 +600,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 		FLOAT clearColor[] = { 0.1f ,0.25f, 0.5f, 0.0f }; // 青っぽい色
 
 		// スペースキーを押されている間、色を変える
-		if (Input::KeyDown(DIK_SPACE))
+		if (input->KeyDown(DIK_SPACE))
 		{
 			clearColor[0] = 1.0f;
 			clearColor[1] = 0.0f;
