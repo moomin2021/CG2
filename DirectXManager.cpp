@@ -178,10 +178,10 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 	// 頂点データ
 	Vertex vertices[] =
 	{
-		{{  0.0f, 100.0f, 0.0f}, {0.0f, 1.0f}},// 左下
-		{{  0.0f,   0.0f, 0.0f}, {0.0f, 0.0f}},// 左上
-		{{100.0f, 100.0f, 0.0f}, {1.0f, 1.0f}},// 右下
-		{{100.0f,   0.0f, 0.0f}, {1.0f, 0.0f}},// 右上
+		{{-50.0f, -50.0f, 50.0f}, {0.0f, 1.0f}},// 左下
+		{{-50.0f,  50.0f, 50.0f}, {0.0f, 0.0f}},// 左上
+		{{ 50.0f, -50.0f, 50.0f}, {1.0f, 1.0f}},// 右下
+		{{ 50.0f,  50.0f, 50.0f}, {1.0f, 0.0f}},// 右上
 	};
 
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
@@ -459,14 +459,27 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 		assert(SUCCEEDED(result));
 	}
 
-	// 単位行列を代入
-	constMapTransform->mat = XMMatrixIdentity();
+	constMapTransform->mat = XMMatrixOrthographicOffCenterLH(
+		2.0f / winWidth, -1.0f,
+		1.0f, -2.0f / winHeight,
+		0.0f, 1.0f
+	);
 
-	constMapTransform->mat.r[0].m128_f32[0] = 2.0f / winWidth;
-	constMapTransform->mat.r[1].m128_f32[1] = -2.0f / winHeight;
+	constMapTransform->mat = XMMatrixPerspectiveFovLH(
+		XMConvertToRadians(45.0f),// -> 上下画角45度
+		(float)winWidth / winHeight,// -> アスペクト比
+		0.1f, 1000.0f// -> 前端, 奥端
+	);
 
-	constMapTransform->mat.r[3].m128_f32[0] = -1.0f;
-	constMapTransform->mat.r[3].m128_f32[1] = 1.0f;
+	XMMATRIX matProjection =
+		XMMatrixPerspectiveFovLH(
+		XMConvertToRadians(45.0f),
+		(float)winWidth / winHeight,
+		0.1f, 1000.0f
+	);
+
+	// 定数バッファに転送
+	constMapTransform->mat = matProjection;
 
 	// ヒープ設定
 	D3D12_HEAP_PROPERTIES cbHeapProp{};
