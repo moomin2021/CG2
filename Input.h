@@ -4,8 +4,8 @@
 class Input
 {
 private:
-	BYTE keys[256];
-	BYTE oldKeys[256];
+	UINT8 keys[256];
+	UINT8 oldKeys[256];
 
 	IDirectInput8 * directInput;
 	IDirectInputDevice8 * keyboard;
@@ -22,6 +22,6 @@ public:
 
 	// çXêVèàóù
 	void InputUpdate();
-	bool KeyDown(char key);
-	bool KeyTrigger(char key);
+	bool KeyDown(UINT8 key);
+	bool KeyTrigger(UINT8 key);
 };
