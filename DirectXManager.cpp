@@ -2,10 +2,10 @@
 
 // コンストラクタ
 DirectXManager::DirectXManager() :
+	levels{ D3D_FEATURE_LEVEL_12_1, D3D_FEATURE_LEVEL_12_0, D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0 },
 	device(nullptr), dxgiFactory(nullptr), swapChain(nullptr), cmdAllocator(nullptr),
-	commandList(nullptr), commandQueue(nullptr), rtvHeap(nullptr), tmpAdapter(nullptr),
-	levels{ D3D_FEATURE_LEVEL_12_1, D3D_FEATURE_LEVEL_12_0, D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0, },
-	fence(nullptr), fenceVal(0)
+	commandList(nullptr), commandQueue(nullptr), rtvHeap(nullptr), rtvHeapDesc{},
+	backBuffers{}, fence(nullptr), fenceVal(0)
 {
 
 }
@@ -17,7 +17,7 @@ DirectXManager::~DirectXManager()
 }
 
 // DirectXの初期化
-void DirectXManager::DirectXInitialize(HWND hwnd)
+void DirectXManager::DirectXInitialize(HWND & hwnd)
 {
 #ifdef _DEBUG
 	//デバッグレイヤーをオンに
@@ -35,6 +35,9 @@ void DirectXManager::DirectXInitialize(HWND hwnd)
 
 	// アダプターの列挙用
 	std::vector<IDXGIAdapter4 *> adapters;
+
+	// ここに特定の名前を持つアダプターオブジェクトが入る
+	IDXGIAdapter4 * tmpAdapter = nullptr;
 
 	// パフォーマンスが高いものから順に、全てのアダプターを列挙する
 	for (UINT i = 0;
@@ -64,6 +67,8 @@ void DirectXManager::DirectXInitialize(HWND hwnd)
 		}
 	}
 
+	D3D_FEATURE_LEVEL featureLevel;
+
 	for (size_t i = 0; i < _countof(levels); i++)
 	{
 		// 採用したアダプターでデバイスを生成
@@ -92,11 +97,15 @@ void DirectXManager::DirectXInitialize(HWND hwnd)
 		IID_PPV_ARGS(&commandList));
 	assert(SUCCEEDED(result));
 
-	//コマンドキューを生成
+	// コマンドキューの設定
+	D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
+	
+	// コマンドキューを生成
 	result = device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&commandQueue));
 	assert(SUCCEEDED(result));
 
 	// スワップチェーンの設定
+	DXGI_SWAP_CHAIN_DESC1 swapChainDesc{};
 	swapChainDesc.Width = 1280;
 	swapChainDesc.Height = 720;
 	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // 色情報の書式
@@ -120,6 +129,7 @@ void DirectXManager::DirectXInitialize(HWND hwnd)
 	device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap));
 
 	// バックバッファ
+	std::vector<ID3D12Resource *> backBuffers;
 	backBuffers.resize(swapChainDesc.BufferCount);
 
 	// スワップチェーンの全てのバッファについて処理する

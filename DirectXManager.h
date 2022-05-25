@@ -11,36 +11,27 @@
 
 class DirectXManager
 {
-private:
-	IDXGIFactory7 * dxgiFactory;
-
-	// ここに特定の名前を持つアダプターオブジェクトが入る
-	IDXGIAdapter4 * tmpAdapter;
-
+public:
 	// 対応レベルの配列
 	D3D_FEATURE_LEVEL levels[4];
 
-	D3D_FEATURE_LEVEL featureLevel;
+	ID3D12Device * device = nullptr;
+	IDXGIFactory7 * dxgiFactory = nullptr;
+	IDXGISwapChain4 * swapChain = nullptr;
+	ID3D12CommandAllocator * cmdAllocator = nullptr;
+	ID3D12GraphicsCommandList * commandList = nullptr;
+	ID3D12CommandQueue * commandQueue = nullptr;
+	ID3D12DescriptorHeap * rtvHeap = nullptr;
 
-	//コマンドキューの設定
-	D3D12_COMMAND_QUEUE_DESC commandQueueDesc;
+	// デスクリプタヒープ
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
 
-	DXGI_SWAP_CHAIN_DESC1 swapChainDesc;
-
-public:
-	ID3D12Device * device;
-
-	IDXGISwapChain4 * swapChain;
-	ID3D12CommandAllocator * cmdAllocator;
-	ID3D12GraphicsCommandList * commandList;
-	ID3D12CommandQueue * commandQueue;
-	ID3D12DescriptorHeap * rtvHeap;
-
+	// バックバッファ
 	std::vector<ID3D12Resource *> backBuffers;
 
-	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
-	ID3D12Fence * fence;
-	UINT64 fenceVal;
+	// フェンス
+	ID3D12Fence * fence = nullptr;
+	UINT64 fenceVal = 0;
 
 	// コンストラクタ
 	DirectXManager();
@@ -49,5 +40,5 @@ public:
 	~DirectXManager();
 
 	// DirectXの初期化
-	void DirectXInitialize(HWND hwnd);
+	void DirectXInitialize(HWND & hwnd);
 };
