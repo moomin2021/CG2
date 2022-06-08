@@ -52,6 +52,8 @@ public:
 
 	ID3D12Resource * constBuffTransform;
 
+	float angle = 0.0f;
+
 	// インデックスデータ
 	unsigned short indices[6] =
 	{

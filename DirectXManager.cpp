@@ -178,10 +178,10 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 	// 頂点データ
 	Vertex vertices[] =
 	{
-		{{-50.0f, -50.0f, 50.0f}, {0.0f, 1.0f}},// 左下
-		{{-50.0f,  50.0f, 50.0f}, {0.0f, 0.0f}},// 左上
-		{{ 50.0f, -50.0f, 50.0f}, {1.0f, 1.0f}},// 右下
-		{{ 50.0f,  50.0f, 50.0f}, {1.0f, 0.0f}},// 右上
+		{{-50.0f, -50.0f, 0.0f}, {0.0f, 1.0f}},// 左下
+		{{-50.0f,  50.0f, 0.0f}, {0.0f, 0.0f}},// 左上
+		{{ 50.0f, -50.0f, 0.0f}, {1.0f, 1.0f}},// 右下
+		{{ 50.0f,  50.0f, 0.0f}, {1.0f, 0.0f}},// 右上
 	};
 
 	// 頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
@@ -428,6 +428,7 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 		XMMATRIX mat;// -> 3D変換行列
 	};
 
+	constBuffTransform = nullptr;
 	ConstBufferDataTransform * constMapTransform = nullptr;
 
 	{
@@ -455,6 +456,7 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 			IID_PPV_ARGS(&constBuffTransform));
 		assert(SUCCEEDED(result));
 
+		// 定数バッファのマッピング
 		result = constBuffTransform->Map(0, nullptr, (void **)&constMapTransform);// -> マッピング
 		assert(SUCCEEDED(result));
 	}
@@ -465,11 +467,11 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 		0.0f, 1.0f
 	);
 
-	constMapTransform->mat = XMMatrixPerspectiveFovLH(
-		XMConvertToRadians(45.0f),// -> 上下画角45度
-		(float)winWidth / winHeight,// -> アスペクト比
-		0.1f, 1000.0f// -> 前端, 奥端
-	);
+	//constMapTransform->mat = XMMatrixPerspectiveFovLH(
+	//	XMConvertToRadians(45.0f),// -> 上下画角45度
+	//	(float)winWidth / winHeight,// -> アスペクト比
+	//	0.1f, 1000.0f// -> 前端, 奥端
+	//);
 
 	XMMATRIX matProjection =
 		XMMatrixPerspectiveFovLH(
@@ -479,7 +481,16 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 	);
 
 	// 定数バッファに転送
-	constMapTransform->mat = matProjection;
+	//constMapTransform->mat = matProjection;
+
+	// ビュー変換行列
+	XMMATRIX matView;
+	XMFLOAT3 eye(0, 0, -100);// -> 視点座標
+	XMFLOAT3 target(0, 0, 0);// -> 注視点座標
+	XMFLOAT3 up(0, 1, 0);// -> 上方向ベクトル
+	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+
+	constMapTransform->mat = matView * matProjection;
 
 	// ヒープ設定
 	D3D12_HEAP_PROPERTIES cbHeapProp{};
@@ -510,7 +521,7 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 	result = constBuffMaterial->Map(0, nullptr, (void **)&constMapMaterial);// -> マッピング
 
 	// 値を書き込むと自動的に転送される
-	constMapMaterial->color = XMFLOAT4(1, 0, 0, 0.5f);// -> RGBAで半透明の赤
+	constMapMaterial->color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);// -> RGBAで半透明の赤
 
 	// インデックスデータ全体のサイズ
 	UINT sizeIB = static_cast<UINT>(sizeof(uint16_t) * _countof(indices));
@@ -556,7 +567,7 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 
 	// WICテクスチャロード
 	result = LoadFromWICFile(
-		L"Resources/texture.jpg",
+		L"Resources/texture.png",
 		WIC_FLAGS_NONE,
 		&metadata, scratchImg
 	);
@@ -652,6 +663,7 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 // DirectXの毎フレーム処理
 void DirectXManager::DirectXUpdate(int winWidth, int winHeight)
 {
+
 	// バックバッファの番号を取得(2つなので0番か1番)
 	UINT bbIndex = swapChain->GetCurrentBackBufferIndex();
 

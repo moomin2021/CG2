@@ -22,6 +22,6 @@ public:
 
 	// XVˆ—
 	void InputUpdate();
-	bool KeyDown(UINT8 key);
-	bool KeyTrigger(UINT8 key);
+	bool PushKey(UINT8 key);
+	bool TriggerKey(UINT8 key);
 };

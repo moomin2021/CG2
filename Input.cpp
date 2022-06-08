@@ -50,12 +50,12 @@ void Input::InputUpdate()
 	keyboard->GetDeviceState(sizeof(keys), keys);
 }
 
-bool Input::KeyDown(UINT8 key)
+bool Input::PushKey(UINT8 key)
 {
 	return keys[key];
 }
 
-bool Input::KeyTrigger(UINT8 key)
+bool Input::TriggerKey(UINT8 key)
 {
 	return keys[key] && !oldKeys[key];
 }
