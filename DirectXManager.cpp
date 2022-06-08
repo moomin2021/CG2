@@ -490,7 +490,29 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 	XMFLOAT3 up(0, 1, 0);// -> 上方向ベクトル
 	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
 
-	constMapTransform->mat = matView * matProjection;
+	// ワールド変換行列
+	XMMATRIX matWorld;
+	matWorld = XMMatrixIdentity();
+
+	// スケーリング
+	XMMATRIX matScale;// -> スケーリング行列
+	matScale = XMMatrixScaling(1.0f, 0.5f, 1.0f);
+	matWorld *= matScale;
+
+	// 回転
+	XMMATRIX matRot;// -> 回転行列
+	matRot = XMMatrixIdentity();
+	matRot *= XMMatrixRotationZ(XMConvertToRadians(0.0f));// -> Z軸まわり0度回転
+	matRot *= XMMatrixRotationX(XMConvertToRadians(15.0f));// -> X軸まわりに15度回転
+	matRot *= XMMatrixRotationY(XMConvertToRadians(30.0f));// -> Y軸まわりに30度回転
+	matWorld += matRot;// -> ワールド行列に回転を反映
+
+	// 平行移動
+	XMMATRIX matTrans;// -> 平行移動行列
+	matTrans = XMMatrixTranslation(-50.0f, 0, 0);
+	matWorld *= matTrans;// -> ワールド行列に平行移動を反映
+
+	constMapTransform->mat = matWorld * matView * matProjection;
 
 	// ヒープ設定
 	D3D12_HEAP_PROPERTIES cbHeapProp{};
