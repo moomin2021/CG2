@@ -528,6 +528,7 @@ void DirectXManager::DrawInitialize(int winWidth, int winHeight)
 	cbResourceDesc.SampleDesc.Count = 1;
 	cbResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
+
 	// 定数バッファの生成
 	result = device->CreateCommittedResource(
 		&cbHeapProp,// -> ヒープ設定
